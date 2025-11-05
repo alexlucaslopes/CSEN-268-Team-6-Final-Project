@@ -389,7 +389,7 @@ class HomePage extends StatelessWidget {
                   final note = notes[index];
                   return GestureDetector(
                     onTap: () {
-                      context.go('/list/${note['title']}');
+                      context.push('/list/${note['title']}');
                     },
                     child: Card(
                       elevation: 3,
