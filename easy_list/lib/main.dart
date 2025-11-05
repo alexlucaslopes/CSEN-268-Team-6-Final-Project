@@ -1038,7 +1038,7 @@ class _PrintPage extends State<PrintPage> {
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: Colors.grey,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
