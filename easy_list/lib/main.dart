@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'list_details.dart';
 
 void main() {
   runApp(const EasyListerApp());
