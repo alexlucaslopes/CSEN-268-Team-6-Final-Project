@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-//import 'package:go_router/go_route.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
   runApp(const EasyListerApp());
@@ -10,20 +10,36 @@ class EasyListerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    final GoRouter router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const WelcomePage(),
+        ),
+        GoRoute(
+          path: '/signup',
+          builder: (context, state) => const SignUpPage(),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginPage(),
+        ),
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => const HomePage(),
+        ),
+      ],
+    );
+
+    return MaterialApp.router(
       title: 'EasyLister',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const WelcomePage(),
-        '/signup': (context) => const SignUpPage(),
-        '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),
-      },
+      routerConfig: router,
     );
   }
 }
@@ -55,12 +71,12 @@ class WelcomePage extends StatelessWidget {
               const SizedBox(height: 40),
               _buildButton(
                 label: 'Get Started',
-                onPressed: () => Navigator.pushNamed(context, '/signup'),
+                onPressed: () => context.go('/signup'),
               ),
               const SizedBox(height: 20),
               _buildButton(
                 label: 'Log In',
-                onPressed: () => Navigator.pushNamed(context, '/login'),
+                onPressed: () => context.go('/login'),
               ),
             ],
           ),
@@ -119,7 +135,7 @@ class SignUpPage extends StatelessWidget {
               const SizedBox(height: 30),
               _buildButton(
                 label: 'Sign Up',
-                onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
+                onPressed: () => context.go('/home'),
               ),
             ],
           ),
@@ -188,7 +204,7 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 30),
               _buildButton(
                 label: 'Login',
-                onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
+                onPressed: () => context.go('/home'),
               ),
             ],
           ),
