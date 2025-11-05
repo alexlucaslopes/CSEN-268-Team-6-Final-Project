@@ -29,6 +29,14 @@ class EasyListerApp extends StatelessWidget {
           path: '/home',
           builder: (context, state) => const HomePage(),
         ),
+        // list details
+        GoRoute(
+          path: '/list/:listName',
+          builder: (context, state) {
+            final listName = state.pathParameters['listName']!;
+            return ListDetailsScreen(listName: listName);
+          },
+        ),
         GoRoute(
           path: '/addnote', 
           builder: (context, state) => const AddNotePage()),
