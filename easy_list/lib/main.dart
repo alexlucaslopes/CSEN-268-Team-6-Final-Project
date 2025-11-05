@@ -878,7 +878,6 @@ class _AddFriendPage extends State<AddFriendPage> {
 class PrintPage extends StatelessWidget {
   const PrintPage({super.key});
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
