@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ListDetailsScreen extends StatelessWidget {
   final String listName;
@@ -129,7 +130,7 @@ class ListDetailsScreen extends StatelessWidget {
         // Back button
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -211,4 +212,5 @@ class ListDetailsScreen extends StatelessWidget {
       ),
     );
   }
+
 }
