@@ -8,7 +8,7 @@ class EasyListerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final GoRouter router = buildRouter();
+    final GoRouter router = buildRouter(context);
 
     return MaterialApp.router(
       title: 'EasyLister',

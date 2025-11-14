@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/bloc.dart';
+import '../../bloc/event.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/auth_text_field.dart';
 
@@ -8,9 +10,9 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -24,7 +26,9 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 30),
               AuthButton(
                 label: 'Login',
-                onPressed: () => context.go('/home'),
+                onPressed: () {
+                  context.read<AuthenticationBloc>().add(LoggedIn());
+                },
               ),
             ],
           ),

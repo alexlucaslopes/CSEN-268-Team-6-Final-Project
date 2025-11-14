@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/bloc.dart';
+import '../../bloc/event.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/auth_text_field.dart';
+
 
 class SignUpPage extends StatelessWidget {
   const SignUpPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController usernameController = TextEditingController();
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
+    final usernameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -28,8 +31,10 @@ class SignUpPage extends StatelessWidget {
               AuthTextField(hint:'password', controller: passwordController, obscure: true),
               const SizedBox(height: 30),
               AuthButton(
-                label: 'Sign Up',
-                onPressed: () => context.go('/home'),
+                label: 'Login',
+                onPressed: () {
+                  context.read<AuthenticationBloc>().add(LoggedIn());
+                },
               ),
             ],
           ),
