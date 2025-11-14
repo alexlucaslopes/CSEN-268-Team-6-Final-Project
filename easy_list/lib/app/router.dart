@@ -17,8 +17,21 @@ GoRouter buildRouter() {
       GoRoute(path: '/signup', builder: (context, state) => const SignUpPage()),
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(path: '/home', builder: (context, state) => const HomePage()),
+      GoRoute(
+          path: '/home_share',
+          builder: (context, state) {
+            final localNotes = state.extra as List<Map<String, String>>?;
+            return HomePageShare(localNotes: localNotes ?? []);
+          },
+        ),
       GoRoute(path: '/addnote', builder: (context, state) => const AddNotePage()),
-      GoRoute(path: '/share', builder: (context, state) => const SharePage()),
+      GoRoute(
+          path: '/share',
+          builder: (context, state) {
+            final localNotes = state.extra as List<Map<String, String>>?;
+            return SharePage(localNotes: localNotes ?? []);
+          },
+        ),
       GoRoute(path: '/addfriend', builder: (context, state) => const AddFriendPage()),
       GoRoute(path: '/print', builder: (context, state) => const PrintPage()),
       GoRoute(path: '/list/:listName', builder: (context, state)
