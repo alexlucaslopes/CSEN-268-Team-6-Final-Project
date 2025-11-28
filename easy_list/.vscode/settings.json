@@ -1,5 +1,6 @@
 {
     "files.readonlyInclude": {
         "{**/.c4z/.extsrcs/*.PROTSYM.cbl,**/.c4z/.extsrcs/*.PROTSYM.listing}": true
-    }
+    },
+    "cmake.sourceDirectory": "/Users/alexlopes/Documents/GitHub/CSEN-268-Team-6-Final-Project/easy_list/linux"
 }
