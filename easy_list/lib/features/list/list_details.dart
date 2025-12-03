@@ -1,12 +1,73 @@
+import 'dart:async'; // StreamSubscription
+import 'dart:math';  // Calculate shake amount
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sensors_plus/sensors_plus.dart'; // Sensor package
 
-class ListDetailsScreen extends StatelessWidget {
+class ListDetailsScreen extends StatefulWidget {
   final String listName;
 
   const ListDetailsScreen({super.key, required this.listName});
 
-  // Share dialog
+  @override
+  State<ListDetailsScreen> createState() => _ListDetailsScreenState();
+}
+
+class _ListDetailsScreenState extends State<ListDetailsScreen> {
+  List<Map<String, String>> items = [
+    {'name': 'Milk', 'description': 'Get 2% milk.'},
+    {'name': 'Bread', 'description': 'Whole wheat.'},
+    {'name': 'Eggs', 'description': 'A dozen, free-range.'},
+  ];
+
+  StreamSubscription? _accelerometerSubscription;
+  DateTime? _lastShakeTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _startListeningToShake();
+  }
+
+  @override
+  void dispose() {
+    _accelerometerSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _startListeningToShake() {
+    // Listen to accelerometer events
+    _accelerometerSubscription = accelerometerEventStream().listen((event) {
+      double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+
+      if (acceleration > 25) {
+        final now = DateTime.now();
+        // Simple debounce to prevent triggering 10 times in 1 second
+        if (_lastShakeTime == null || 
+            now.difference(_lastShakeTime!) > const Duration(seconds: 1)) {
+          _lastShakeTime = now;
+          _clearList();
+        }
+      }
+    });
+  }
+
+  void _clearList() {
+    if (items.isNotEmpty) {
+      setState(() {
+        items.clear();
+      });
+      
+      // Optional: Give user feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("List cleared by shaking!"),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
   void _showShareDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -17,9 +78,8 @@ class ListDetailsScreen extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Username input
               Container(
-                color: const Color(0xFFBBDEFB), 
+                color: const Color(0xFFBBDEFB),
                 padding: const EdgeInsets.symmetric(horizontal: 10.0),
                 child: const TextField(
                   decoration: InputDecoration(
@@ -29,12 +89,9 @@ class ListDetailsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              
-              // Dialog actions
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Cancel button
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.redAccent,
@@ -44,13 +101,12 @@ class ListDetailsScreen extends StatelessWidget {
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 10),
-                  // Invite button
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () {}, // Does nothing RN
+                    onPressed: () {}, 
                     child: const Text('Invite'),
                   ),
                 ],
@@ -62,7 +118,6 @@ class ListDetailsScreen extends StatelessWidget {
     );
   }
 
-  // overlay for viewing item's details
   void _showViewItemDialog(BuildContext context, Map<String, String> item) {
     showDialog(
       context: context,
@@ -73,7 +128,6 @@ class ListDetailsScreen extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              //  container with item info
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(15.0),
@@ -91,8 +145,6 @@ class ListDetailsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              
-              // Dialog actions
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -102,7 +154,7 @@ class ListDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton(
-                    onPressed: () {}, // Does nothing right now
+                    onPressed: () {}, 
                     child: const Text('Confirm Edit'),
                   ),
                 ],
@@ -114,20 +166,11 @@ class ListDetailsScreen extends StatelessWidget {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-    //example data
-    final List<Map<String, String>> items = [
-      {'name': 'Milk', 'description': 'Get 2% milk.'},
-      {'name': 'Bread', 'description': 'Whole wheat.'},
-      {'name': 'Eggs', 'description': 'A dozen, free-range.'},
-    ];
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        // Back button
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => context.pop(),
@@ -148,7 +191,7 @@ class ListDetailsScreen extends StatelessWidget {
                   child: const Text('Share list'),
                 ),
                 TextButton(
-                  onPressed: () {}, // Does nothing right now
+                  onPressed: () {}, 
                   child: const Text('Delete list', style: TextStyle(color: Colors.red)),
                 ),
               ],
@@ -167,26 +210,33 @@ class ListDetailsScreen extends StatelessWidget {
                 children: [
                   // Header
                   Text(
-                    listName,
+                    widget.listName, // Use widget.listName because we are in State class
                     style: const TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold),
                   ),
                   const Divider(height: 30.0),
 
-                  // real list of items
-                  Column(
+                  // Real list of items
+                  // We check if items is empty to show a placeholder or the list
+                  items.isEmpty 
+                  ? const Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Center(child: Text("List cleared! Shake to clear again?")),
+                    )
+                  : Column(
                     children: items.map((item) {
                       return Row(
                         children: [
-                          // Item name
                           Expanded(child: Text('• ${item['name']}')),
-                          // View
                           TextButton(
                             onPressed: () => _showViewItemDialog(context, item),
                             child: const Text('View'),
                           ),
-                          // Delete
                           IconButton(
-                            onPressed: () {}, // Does nothing right now
+                            onPressed: () {
+                              setState(() {
+                                items.remove(item);
+                              });
+                            }, 
                             icon: const Icon(Icons.delete_outline, color: Colors.red, size: 22),
                           ),
                         ],
@@ -200,7 +250,9 @@ class ListDetailsScreen extends StatelessWidget {
                   Align(
                     alignment: Alignment.center,
                     child: IconButton(
-                      onPressed: () {}, // Does nothing right now
+                      onPressed: () {
+                        // Logic to add item
+                      }, 
                       icon: const Icon(Icons.add_circle_outline, color: Colors.blue),
                     ),
                   ),
@@ -212,5 +264,4 @@ class ListDetailsScreen extends StatelessWidget {
       ),
     );
   }
-
 }
