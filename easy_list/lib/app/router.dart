@@ -1,21 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-//import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
 import '../features/list/list_details.dart';
 import '../features/home/home.dart';
 import '../features/list/pages/addnote.dart';
 import '../features/list/pages/sharepage.dart';
 import '../features/list/pages/addfriend.dart';
-import '../features/list/pages/printpage.dart';
-
 import '../features/auth/presentation/pages/welcome.dart';
 import '../features/auth/presentation/pages/signup.dart';
 import '../features/auth/presentation/pages/login.dart';
 import '../features/auth/bloc/bloc.dart';
 import '../features/auth/bloc/state.dart';
-
 
 GoRouter buildRouter(AuthenticationBloc authBloc) {
   return GoRouter(
@@ -24,7 +19,6 @@ GoRouter buildRouter(AuthenticationBloc authBloc) {
 
     redirect: (context, state) {
       final authState = authBloc.state;
-
       final isLoggedIn = authState is AuthenticationAuthenticated;
       final location = state.matchedLocation;
       final isAuthPage = location == '/login' || location == '/signup';
@@ -53,7 +47,6 @@ GoRouter buildRouter(AuthenticationBloc authBloc) {
   );
 }
 
-
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
     _subscription = stream.listen((_) {
@@ -69,5 +62,3 @@ class GoRouterRefreshStream extends ChangeNotifier {
     super.dispose();
   }
 }
-
-

@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app/theme.dart';
 
 class AddNotePage extends StatefulWidget {
   const AddNotePage({super.key});
@@ -8,105 +11,138 @@ class AddNotePage extends StatefulWidget {
   State<AddNotePage> createState() => _AddNotePageState();
 }
 
-
 class _AddNotePageState extends State<AddNotePage> {
-  final FocusNode _titleFocusNode = FocusNode(); 
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _contentController = TextEditingController();
+  final List<TextEditingController> _itemControllers = [];
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
-          FocusScope.of(context).requestFocus(_titleFocusNode);
-        }
-      });
-    });
+    _addNewItem();
   }
 
-  @override
-  void dispose() {
-    _titleFocusNode.dispose();
-    _titleController.dispose();
-    _contentController.dispose();
-    super.dispose();
+  void _addNewItem() {
+    setState(() => _itemControllers.add(TextEditingController()));
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        title: const Text("New List"),
+        // --- FIX IS HERE ---
+        // Changed context.pop() to context.go('/home')
         leading: IconButton(
-          icon: const Text(
-            '<',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          
-        onPressed: () => context.go('/home'),
+          icon: const Icon(Icons.close), 
+          onPressed: () => context.go('/home')
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: TextButton(
+              onPressed: _saveList,
+              style: TextButton.styleFrom(backgroundColor: AppTheme.secondary, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20)),
+              child: const Text("Save"),
+            ),
+          )
+        ],
       ),
-
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            SizedBox(
-              height: 150,
-              child: TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Title',
-                ),
-                maxLines: null,
-                focusNode: _titleFocusNode,
+            // Title Input
+            TextField(
+              controller: _titleController,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+              decoration: const InputDecoration(
+                hintText: 'List Title',
+                border: InputBorder.none,
+                filled: false,
+                contentPadding: EdgeInsets.zero,
               ),
             ),
-            const SizedBox(height: 4), 
-            SizedBox(
-              height: 80,
-              child: TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'content',
+            const Divider(height: 30),
+            
+            // Items List
+            Expanded(
+              child: ListView.builder(
+                itemCount: _itemControllers.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.circle_outlined, color: Colors.grey, size: 16),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _itemControllers[index],
+                            decoration: const InputDecoration(
+                              hintText: 'List item...',
+                              border: InputBorder.none,
+                              filled: false,
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        if (_itemControllers.length > 1)
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 16, color: Colors.grey),
+                            onPressed: () => setState(() => _itemControllers.removeAt(index)),
+                          )
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            
+            // Add Item Button
+            const SizedBox(height: 10),
+            InkWell(
+              onTap: _addNewItem,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.withOpacity(0.3), style: BorderStyle.solid),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                maxLines: null,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add, color: AppTheme.textDark),
+                    SizedBox(width: 8),
+                    Text("Add Item", style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
-      
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        shape: const CircularNotchedRectangle(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Builder(
-                builder: (context) => IconButton(
-                  icon: const Text(
-                    'Confirm',            
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  onPressed: () => context.go('/home'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
+  }
+
+  Future<void> _saveList() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && _titleController.text.isNotEmpty) {
+      List<Map<String, dynamic>> items = [];
+      for (var controller in _itemControllers) {
+        if (controller.text.trim().isNotEmpty) {
+          items.add({'task': controller.text.trim(), 'done': false});
+        }
+      }
+      await FirebaseFirestore.instance.collection('lists').add({
+        'title': _titleController.text,
+        'items': items,
+        'ownerId': user.uid,
+        'ownerEmail': user.email,
+        'sharedWith': [],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      if (context.mounted) context.go('/home');
+    }
   }
 }

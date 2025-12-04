@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/auth_button.dart';
+
+//import '../widgets/auth_button.dart';
+import '../widgets/list_writing.dart';
+import '../widgets/bullet_points.dart';
+
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -15,24 +19,30 @@ class WelcomePage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Welcome to EasyLister!!!',
-                style: TextStyle(
+              TextWriting(                     // <-- REPLACE old Text()
+                text: 'Welcome to EasyLister!!!',
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                   color: Colors.blue,
                 ),
-                textAlign: TextAlign.center,
+                speed: Duration(milliseconds: 60), // typing speed
               ),
+
               const SizedBox(height: 40),
-              AuthButton(
+
+              AnimatedBulletButton(
                 label: 'Get Started',
                 onPressed: () => context.go('/signup'),
+                delay: const Duration(milliseconds: 2000),
               ),
+
               const SizedBox(height: 20),
-              AuthButton(
+
+              AnimatedBulletButton(
                 label: 'Log In',
                 onPressed: () => context.go('/login'),
+                delay: const Duration(milliseconds: 4000),
               ),
             ],
           ),

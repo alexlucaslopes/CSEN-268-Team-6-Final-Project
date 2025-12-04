@@ -1,226 +1,167 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 
 class SharePage extends StatefulWidget {
-  final List<Map<String, String>> localNotes;
-
-  const SharePage({super.key, required this.localNotes});
+  const SharePage({super.key});
 
   @override
   State<SharePage> createState() => _SharePage();
 }
 
 class _SharePage extends State<SharePage> {
-  List<bool> _selected_friends = [false, false, false, false]; 
-  List<bool> _selected_notes = [];
+  final Set<String> _selectedFriendEmails = {};
+  final Set<String> _selectedNoteIds = {};
 
   @override
   Widget build(BuildContext context) {
-    final notes = widget.localNotes;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return const SizedBox.shrink();
 
-    if (_selected_notes.length != notes.length) {
-      _selected_notes = List<bool>.filled(notes.length, false);
-    }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Text(
-            '<',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          onPressed: () => context.go('/home'),
+           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+           onPressed: () => context.go('/home'),
         ),
-        title: SizedBox(
-          height: 40,
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Search friend..',
-              hintStyle: const TextStyle(color: Colors.black54),
-              prefixIcon: const Icon(Icons.search, color: Colors.black54),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24),
-                borderSide: BorderSide.none,
-              ) ,
-            ),
-            onChanged: (value) {
-              
-            },
-          ),
-        ),
+        title: const Text("Share Multiple", style: TextStyle(color: Colors.black)),
       ),
+      body: Column(
+        children: [
+          const Padding(padding: EdgeInsets.all(8.0), child: Text("Select Friends")),
+          SizedBox(
+            height: 60,
+            child: StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance.collection('users').doc(currentUser.uid).snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                
+                if (!snapshot.data!.exists) return const SizedBox.shrink();
 
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            ...List.generate(_selected_friends.length, (index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selected_friends[index] = !_selected_friends[index];
-                    });
+                final userData = snapshot.data!.data() as Map<String, dynamic>?;
+                if (userData == null) return const SizedBox.shrink();
+
+                final List friends = userData['friends'] ?? [];
+
+                if (friends.isEmpty) return const Center(child: Text("Add friends first!"));
+
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: friends.length,
+                  itemBuilder: (context, index) {
+                    return FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance.collection('users').doc(friends[index]).get(),
+                      builder: (context, fSnap) {
+                        if (!fSnap.hasData || fSnap.data == null) {
+                          return const SizedBox(width: 50, child: Center(child: CircularProgressIndicator()));
+                        }
+                        
+                        if (!fSnap.data!.exists) return const SizedBox.shrink();
+
+                        final fData = fSnap.data!.data() as Map<String, dynamic>?;
+                        
+                        if (fData == null) return const SizedBox.shrink();
+
+                        final email = fData['email'] ?? 'Unknown';
+                        final username = fData['username'] ?? email;
+                        final isSelected = _selectedFriendEmails.contains(email);
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: ChoiceChip(
+                            label: Text(username),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                if(selected) _selectedFriendEmails.add(email);
+                                else _selectedFriendEmails.remove(email);
+                              });
+                            },
+                          ),
+                        );
+                      }
+                    );
                   },
-                  child: Container(
-                    height: 60,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _selected_friends[index] ? Colors.blue : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Friend ${index + 1}',
-                      style: TextStyle(
-                        color: _selected_friends[index] ? Colors.white : Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-
-            const SizedBox(height: 16),
-
-            Expanded(
-              child: ListView.builder(
-                itemCount: notes.length,
-                itemBuilder: (context, index) {
-                  final note = notes[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selected_notes[index] = !_selected_notes[index];
-                        });
-                      },
-                      child: Container(
-                        height: 60,
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: _selected_notes[index] ? Colors.green : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              note['title'] ?? '',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _selected_notes[index] ? Colors.white : Colors.black,
-                              ),
-                            ),
-                            Text(
-                              note['content'] ?? '',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: _selected_notes[index] ? Colors.white : Colors.black54,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+                );
+              }
             ),
-          ],
-        ),
-      ),
+          ),
 
+          const Divider(),
+
+          const Padding(padding: EdgeInsets.all(8.0), child: Text("Select Lists")),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('lists')
+                  .where('ownerId', isEqualTo: currentUser.uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                 if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                 final docs = snapshot.data!.docs;
+                 
+                 return ListView.builder(
+                   itemCount: docs.length,
+                   itemBuilder: (context, index) {
+                     final doc = docs[index];
+                     final data = doc.data() as Map<String, dynamic>;
+                     final isSelected = _selectedNoteIds.contains(doc.id);
+
+                     return ListTile(
+                       title: Text(data['title'] ?? 'No Title'),
+                       trailing: Icon(
+                         isSelected ? Icons.check_circle : Icons.circle_outlined,
+                         color: isSelected ? Colors.green : Colors.grey,
+                       ),
+                       onTap: () {
+                         setState(() {
+                           if(isSelected) _selectedNoteIds.remove(doc.id);
+                           else _selectedNoteIds.add(doc.id);
+                         });
+                       },
+                     );
+                   },
+                 );
+              }
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
-        shape: const CircularNotchedRectangle(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Builder(
-                builder: (context) => IconButton(
-                  icon: const Text(
-                    'Share',            
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+              child: const Text("SHARE SELECTED", style: TextStyle(fontWeight: FontWeight.bold)),
+              onPressed: () async {
+                if(_selectedFriendEmails.isEmpty || _selectedNoteIds.isEmpty) {
+                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Select friends and lists first")));
+                   return;
+                }
 
-                  onPressed: () async {
-                    List<int> selectedFriendIndexes = [];
-                    for (int i = 0; i < _selected_friends.length; i++) {
-                      if (_selected_friends[i]) selectedFriendIndexes.add(i);
-                    }
+                final batch = FirebaseFirestore.instance.batch();
+                
+                for(String noteId in _selectedNoteIds) {
+                  final docRef = FirebaseFirestore.instance.collection('lists').doc(noteId);
+                  batch.update(docRef, {
+                    'sharedWith': FieldValue.arrayUnion(_selectedFriendEmails.toList())
+                  });
+                }
 
-                    List<int> selectedNoteIndexes = [];
-                    for (int i = 0; i < _selected_notes.length; i++) {
-                      if (_selected_notes[i]) selectedNoteIndexes.add(i);
-                    }
-
-                    if (selectedFriendIndexes.isEmpty || selectedNoteIndexes.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please select friends and notes')),
-                      );
-                      return;
-                    }
-
-                    try {
-                      for (int noteIdx in selectedNoteIndexes) {
-                        final note = widget.localNotes[noteIdx];
-                        final noteId = note['title'] ?? '';
-
-                        if (noteId.isEmpty) continue; 
-
-                        await FirebaseFirestore.instance
-                            .collection('notes')
-                            .doc(noteId)
-                            .update({
-                            'sharedWith': FieldValue.arrayUnion(
-                            selectedFriendIndexes.map((i) => 'friend_$i').toList(),
-                          ),
-                        });
-                      }
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Shared successfully!')),
-                      );
-                      context.go('/home');
-
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to share: $e')),
-                      );
-                    }
-                  },
-
-
-
-                ), 
-              ),
-            ],
-          ),
+                await batch.commit();
+                if(context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Shared successfully!")));
+                  context.go('/home');
+                }
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 }
-
