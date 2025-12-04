@@ -37,7 +37,7 @@ GoRouter buildRouter(AuthenticationBloc authBloc) {
       GoRoute(path: '/addnote', builder: (_, __) => const AddNotePage()),
       GoRoute(path: '/share', builder: (_, __) => const SharePage()),
       GoRoute(path: '/addfriend', builder: (_, __) => const AddFriendPage()),
-      GoRoute(path: '/print', builder: (_, __) => const PrintPage()),
+            
       GoRoute(
         path: '/list/:listName',
         builder: (_, state) =>
