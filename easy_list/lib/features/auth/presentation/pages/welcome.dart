@@ -20,7 +20,7 @@ class WelcomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextWriting(                     // <-- REPLACE old Text()
-                text: 'Welcome to EasyLister!!!',
+                text: 'Welcome to EasyLister!',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
