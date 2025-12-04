@@ -42,7 +42,7 @@ class WelcomePage extends StatelessWidget {
               AnimatedBulletButton(
                 label: 'Log In',
                 onPressed: () => context.go('/login'),
-                delay: const Duration(milliseconds: 4000),
+                delay: const Duration(milliseconds: 3000),
               ),
             ],
           ),

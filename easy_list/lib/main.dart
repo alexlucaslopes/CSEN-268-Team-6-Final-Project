@@ -8,9 +8,16 @@ import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  
+  // Initialize Firebase BEFORE runApp()
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    // Ignore duplicate app error (happens on hot reload)
+    if (!e.toString().contains("duplicate-app")) rethrow;
+  }
   
   runApp(
     BlocProvider(
