@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app/theme.dart';
 
 class SharePage extends StatefulWidget {
   const SharePage({super.key});
@@ -21,16 +22,19 @@ class _SharePage extends State<SharePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
         leading: IconButton(
-           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-           onPressed: () => context.go('/home'),
+           icon: const Icon(Icons.arrow_back_ios), 
+           onPressed: () => context.pop(),
         ),
-        title: const Text("Share Multiple", style: TextStyle(color: Colors.black)),
+        title: const Text("Share Multiple"), 
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(padding: EdgeInsets.all(8.0), child: Text("Select Friends")),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 8), 
+            child: Text("Select Friends", style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16))
+          ),
           SizedBox(
             height: 60,
             child: StreamBuilder<DocumentSnapshot>(
@@ -39,16 +43,21 @@ class _SharePage extends State<SharePage> {
                 if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                 
                 if (!snapshot.data!.exists) return const SizedBox.shrink();
-
                 final userData = snapshot.data!.data() as Map<String, dynamic>?;
                 if (userData == null) return const SizedBox.shrink();
 
                 final List friends = userData['friends'] ?? [];
 
-                if (friends.isEmpty) return const Center(child: Text("Add friends first!"));
+                if (friends.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.only(left: 16.0),
+                    child: Align(alignment: Alignment.centerLeft, child: Text("Add friends first!", style: TextStyle(color: Colors.grey))),
+                  );
+                }
 
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   itemCount: friends.length,
                   itemBuilder: (context, index) {
                     return FutureBuilder<DocumentSnapshot>(
@@ -57,11 +66,9 @@ class _SharePage extends State<SharePage> {
                         if (!fSnap.hasData || fSnap.data == null) {
                           return const SizedBox(width: 50, child: Center(child: CircularProgressIndicator()));
                         }
-                        
                         if (!fSnap.data!.exists) return const SizedBox.shrink();
 
                         final fData = fSnap.data!.data() as Map<String, dynamic>?;
-                        
                         if (fData == null) return const SizedBox.shrink();
 
                         final email = fData['email'] ?? 'Unknown';
@@ -71,8 +78,11 @@ class _SharePage extends State<SharePage> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4.0),
                           child: ChoiceChip(
-                            label: Text(username),
+                            label: Text(username, style: TextStyle(color: isSelected ? Colors.white : AppTheme.textDark)),
                             selected: isSelected,
+                            selectedColor: AppTheme.secondary,
+                            backgroundColor: Colors.white,
+                            checkmarkColor: Colors.white,
                             onSelected: (selected) {
                               setState(() {
                                 if(selected) _selectedFriendEmails.add(email);
@@ -89,9 +99,12 @@ class _SharePage extends State<SharePage> {
             ),
           ),
 
-          const Divider(),
+          const Divider(height: 30),
 
-          const Padding(padding: EdgeInsets.all(8.0), child: Text("Select Lists")),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0), 
+            child: Text("Select Lists", style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 16))
+          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -102,25 +115,36 @@ class _SharePage extends State<SharePage> {
                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                  final docs = snapshot.data!.docs;
                  
+                 if(docs.isEmpty) return const Center(child: Text("No lists created yet.", style: TextStyle(color: Colors.grey)));
+
                  return ListView.builder(
+                   padding: const EdgeInsets.all(16),
                    itemCount: docs.length,
                    itemBuilder: (context, index) {
                      final doc = docs[index];
                      final data = doc.data() as Map<String, dynamic>;
                      final isSelected = _selectedNoteIds.contains(doc.id);
 
-                     return ListTile(
-                       title: Text(data['title'] ?? 'No Title'),
-                       trailing: Icon(
-                         isSelected ? Icons.check_circle : Icons.circle_outlined,
-                         color: isSelected ? Colors.green : Colors.grey,
+                     return Card(
+                       margin: const EdgeInsets.only(bottom: 8),
+                       elevation: 0,
+                       shape: RoundedRectangleBorder(
+                         borderRadius: BorderRadius.circular(12),
+                         side: BorderSide(color: isSelected ? AppTheme.secondary : Colors.grey.withValues(alpha: 0.2), width: isSelected ? 2 : 1)
                        ),
-                       onTap: () {
-                         setState(() {
-                           if(isSelected) _selectedNoteIds.remove(doc.id);
-                           else _selectedNoteIds.add(doc.id);
-                         });
-                       },
+                       child: ListTile(
+                         title: Text(data['title'] ?? 'No Title', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                         trailing: Icon(
+                           isSelected ? Icons.check_circle : Icons.circle_outlined,
+                           color: isSelected ? AppTheme.secondary : Colors.grey,
+                         ),
+                         onTap: () {
+                           setState(() {
+                             if(isSelected) _selectedNoteIds.remove(doc.id);
+                             else _selectedNoteIds.add(doc.id);
+                           });
+                         },
+                       ),
                      );
                    },
                  );
@@ -135,8 +159,12 @@ class _SharePage extends State<SharePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-              child: const Text("SHARE SELECTED", style: TextStyle(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.secondary, 
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12)
+              ),
+              child: const Text("Share Selected"),
               onPressed: () async {
                 if(_selectedFriendEmails.isEmpty || _selectedNoteIds.isEmpty) {
                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Select friends and lists first")));
@@ -155,7 +183,7 @@ class _SharePage extends State<SharePage> {
                 await batch.commit();
                 if(context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Shared successfully!")));
-                  context.go('/home');
+                  context.pop();
                 }
               },
             ),
