@@ -242,6 +242,7 @@ class _ListDetailsScreenState extends State<ListDetailsScreen> {
                     ),
                     const SizedBox(width: 10),
                     FloatingActionButton.small(
+                      heroTag: 'details_fab', 
                       backgroundColor: AppTheme.secondary,
                       elevation: 0,
                       onPressed: () => _addNewItem(items),
