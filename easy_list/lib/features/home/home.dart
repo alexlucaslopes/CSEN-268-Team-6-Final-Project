@@ -16,7 +16,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // 0: Personal, 1: Shared
   int _selectedIndex = 0; 
 
   @override
@@ -62,7 +61,6 @@ class _HomePageState extends State<HomePage> {
           body: Column(
             children: [
               const SizedBox(height: 20),
-              // toggle
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
                 padding: const EdgeInsets.all(4),
@@ -79,7 +77,6 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
 
-              // grid
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: notesQuery.snapshots(),
@@ -123,12 +120,12 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
 
-          // FAB
           floatingActionButton: FloatingActionButton(
+            heroTag: 'home_fab', 
             backgroundColor: AppTheme.secondary,
             shape: const CircleBorder(),
             child: const Icon(Icons.add, color: Colors.white, size: 30),
-            onPressed: () => context.go('/addnote'),
+            onPressed: () => context.push('/addnote'),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
@@ -142,14 +139,12 @@ class _HomePageState extends State<HomePage> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.person_add_outlined), 
-                  onPressed: () => context.go('/addfriend')
+                  onPressed: () => context.push('/addfriend')
                 ),
-                
-                const SizedBox(width: 48), // Space for FAB
-                
+                const SizedBox(width: 48), 
                 IconButton(
                   icon: const Icon(Icons.share_outlined), 
-                  onPressed: () => context.go('/share')
+                  onPressed: () => context.push('/share')
                 ),
               ],
             ),
