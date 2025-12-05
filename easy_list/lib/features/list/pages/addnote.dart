@@ -30,11 +30,9 @@ class _AddNotePageState extends State<AddNotePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("New List"),
-        // --- FIX IS HERE ---
-        // Changed context.pop() to context.go('/home')
         leading: IconButton(
           icon: const Icon(Icons.close), 
-          onPressed: () => context.go('/home')
+          onPressed: () => context.pop(), 
         ),
         actions: [
           Padding(
@@ -51,7 +49,6 @@ class _AddNotePageState extends State<AddNotePage> {
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            // Title Input
             TextField(
               controller: _titleController,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark),
@@ -63,8 +60,6 @@ class _AddNotePageState extends State<AddNotePage> {
               ),
             ),
             const Divider(height: 30),
-            
-            // Items List
             Expanded(
               child: ListView.builder(
                 itemCount: _itemControllers.length,
@@ -97,8 +92,6 @@ class _AddNotePageState extends State<AddNotePage> {
                 },
               ),
             ),
-            
-            // Add Item Button
             const SizedBox(height: 10),
             InkWell(
               onTap: _addNewItem,
@@ -106,7 +99,7 @@ class _AddNotePageState extends State<AddNotePage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.withOpacity(0.3), style: BorderStyle.solid),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3), style: BorderStyle.solid),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Row(
@@ -142,7 +135,7 @@ class _AddNotePageState extends State<AddNotePage> {
         'sharedWith': [],
         'createdAt': FieldValue.serverTimestamp(),
       });
-      if (context.mounted) context.go('/home');
+      if (context.mounted) context.pop();
     }
   }
 }
