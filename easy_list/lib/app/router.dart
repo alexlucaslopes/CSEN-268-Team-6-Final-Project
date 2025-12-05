@@ -25,7 +25,6 @@ GoRouter buildRouter(AuthenticationBloc authBloc) {
 
       if (!isLoggedIn && !isAuthPage && location != '/') return '/';
       if (isLoggedIn && (location == '/' || isAuthPage)) return '/home';
-
       return null;
     },
 
@@ -34,14 +33,67 @@ GoRouter buildRouter(AuthenticationBloc authBloc) {
       GoRoute(path: '/signup', builder: (_, __) => const SignUpPage()),
       GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
       GoRoute(path: '/home', builder: (_, __) => const HomePage()),
-      GoRoute(path: '/addnote', builder: (_, __) => const AddNotePage()),
-      GoRoute(path: '/share', builder: (_, __) => const SharePage()),
-      GoRoute(path: '/addfriend', builder: (_, __) => const AddFriendPage()),
-            
+
+      GoRoute(
+        path: '/addnote',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const AddNotePage(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(0.0, 1.0);
+            const end = Offset.zero;
+            const curve = Curves.easeOut;
+            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            return SlideTransition(position: animation.drive(tween), child: child);
+          },
+        ),
+      ),
+
+      GoRoute(
+        path: '/addfriend',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const AddFriendPage(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(-1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeOut;
+            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            return SlideTransition(position: animation.drive(tween), child: child);
+          },
+        ),
+      ),
+
+      GoRoute(
+        path: '/share',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SharePage(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeOut;
+            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            return SlideTransition(position: animation.drive(tween), child: child);
+          },
+        ),
+      ),
+
       GoRoute(
         path: '/list/:listName',
-        builder: (_, state) =>
-            ListDetailsScreen(listName: state.pathParameters['listName']!),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: ListDetailsScreen(listName: state.pathParameters['listName']!),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.95, end: 1.0).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
     ],
   );
@@ -53,9 +105,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
       notifyListeners();
     });
   }
-
   late final StreamSubscription<dynamic> _subscription;
-
   @override
   void dispose() {
     _subscription.cancel();
