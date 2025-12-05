@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app/theme.dart';
 
 class AddFriendPage extends StatefulWidget {
   const AddFriendPage({super.key});
@@ -27,19 +28,18 @@ class _AddFriendPage extends State<AddFriendPage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () => context.go('/home'),
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => context.pop(),
         ),
         title: TextField(
           controller: _searchController,
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             hintText: 'Add friend by email...',
-            prefixIcon: const Icon(Icons.person_add),
+            prefixIcon: const Icon(Icons.person_add, color: AppTheme.secondary),
             suffixIcon: IconButton(
-              icon: const Icon(Icons.send, color: Colors.blue),
+              icon: const Icon(Icons.send, color: AppTheme.secondary),
               onPressed: _sendRequest,
             ),
             filled: true,
@@ -69,11 +69,14 @@ class _AddFriendPage extends State<AddFriendPage> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // friend request section
+              // friend request
               if (requests.isNotEmpty) ...[
                 const Padding(
                   padding: EdgeInsets.all(16.0), 
-                  child: Text("Friend Requests", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))
+                  child: Text(
+                    "Friend Requests", 
+                    style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 18)
+                  )
                 ),
                 ListView.builder(
                   shrinkWrap: true,
@@ -84,16 +87,24 @@ class _AddFriendPage extends State<AddFriendPage> {
                     return FutureBuilder<DocumentSnapshot>(
                       future: FirebaseFirestore.instance.collection('users').doc(senderUid).get(),
                       builder: (context, senderSnap) {
-                        if (!senderSnap.hasData) return const LinearProgressIndicator();
-                        if (!senderSnap.data!.exists) return const SizedBox.shrink();
+                        if (!senderSnap.hasData || !senderSnap.data!.exists) return const SizedBox.shrink();
 
                         final senderData = senderSnap.data!.data() as Map<String, dynamic>;
                         return ListTile(
-                          leading: const CircleAvatar(child: Icon(Icons.person)),
-                          title: Text(senderData['username'] ?? 'Unknown'),
+                          leading: const CircleAvatar(
+                            backgroundColor: AppTheme.secondary, 
+                            child: Icon(Icons.person, color: Colors.white)
+                          ),
+                          title: Text(
+                            senderData['username'] ?? 'Unknown', 
+                            style: const TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold)
+                          ),
                           subtitle: Text(senderData['email'] ?? ''),
                           trailing: ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.secondary, 
+                              foregroundColor: Colors.white
+                            ),
                             onPressed: () => _acceptRequest(currentUser.uid, senderUid),
                             child: const Text("Accept"),
                           ),
@@ -105,14 +116,17 @@ class _AddFriendPage extends State<AddFriendPage> {
                 const Divider(thickness: 1),
               ],
 
-              // friends section
+              // my friends
               const Padding(
                   padding: EdgeInsets.all(16.0), 
-                  child: Text("My Friends", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))
+                  child: Text(
+                    "My Friends", 
+                    style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 18)
+                  )
               ),
               Expanded(
                 child: friends.isEmpty 
-                ? const Center(child: Text("No friends yet."))
+                ? const Center(child: Text("No friends yet.", style: TextStyle(color: Colors.grey)))
                 : ListView.builder(
                   itemCount: friends.length,
                   itemBuilder: (context, index) {
@@ -120,8 +134,7 @@ class _AddFriendPage extends State<AddFriendPage> {
                     return FutureBuilder<DocumentSnapshot>(
                       future: FirebaseFirestore.instance.collection('users').doc(friendUid).get(),
                       builder: (context, friendSnap) {
-                        if (!friendSnap.hasData) return const SizedBox.shrink();
-                        if (!friendSnap.data!.exists) return const SizedBox.shrink();
+                        if (!friendSnap.hasData || !friendSnap.data!.exists) return const SizedBox.shrink();
 
                         final friendData = friendSnap.data!.data() as Map<String, dynamic>;
                         final username = friendData['username'] ?? 'Unknown';
@@ -129,19 +142,27 @@ class _AddFriendPage extends State<AddFriendPage> {
 
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          elevation: 2,
+                          elevation: 0,
                           color: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.grey.withValues(alpha: 0.2))
+                          ),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: Colors.green[100],
-                              child: Text(username.isNotEmpty ? username[0].toUpperCase() : "?", style: const TextStyle(color: Colors.green)),
+                              backgroundColor: AppTheme.secondary.withValues(alpha: 0.1),
+                              child: Text(
+                                username.isNotEmpty ? username[0].toUpperCase() : "?", 
+                                style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.bold)
+                              ),
                             ),
-                            title: Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            title: Text(
+                              username, 
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)
+                            ),
                             subtitle: Text(email),
                             trailing: IconButton(
-                              icon: const Icon(Icons.person_remove_outlined, color: Colors.red),
-                              // PASSING EMAIL HERE SO WE CAN CLEAN UP LISTS
+                              icon: const Icon(Icons.person_remove_outlined, color: Colors.redAccent),
                               onPressed: () => _showUnfriendDialog(context, currentUser.uid, friendUid, username, email),
                             ),
                           ),
@@ -185,17 +206,18 @@ class _AddFriendPage extends State<AddFriendPage> {
 
   Future<void> _removeFriend(String myUid, String friendUid, String friendEmail) async {
     try {
-      // Remove from Users collection
       await FirebaseFirestore.instance.runTransaction((transaction) async {
+        // Remove friend from my list
         transaction.update(FirebaseFirestore.instance.collection('users').doc(myUid), {
           'friends': FieldValue.arrayRemove([friendUid])
         });
+        // Remove me from friend's list
         transaction.update(FirebaseFirestore.instance.collection('users').doc(friendUid), {
           'friends': FieldValue.arrayRemove([myUid])
         });
       });
 
-      // Remove their email from YOUR Shared lists
+      // 2. Remove their email from YOUR Shared lists (Revoke access)
       final myListsSnapshot = await FirebaseFirestore.instance
           .collection('lists')
           .where('ownerId', isEqualTo: myUid)
@@ -220,9 +242,11 @@ class _AddFriendPage extends State<AddFriendPage> {
 
   Future<void> _sendRequest() async {
     FocusScope.of(context).unfocus();
+
     final currentUser = FirebaseAuth.instance.currentUser;
     if(_searchEmail.isEmpty || currentUser == null) return;
     
+    // Force lowercase for accurate search
     final emailToFind = _searchEmail.trim().toLowerCase();
 
     if(emailToFind == currentUser.email) {
