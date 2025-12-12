@@ -217,7 +217,7 @@ class _AddFriendPage extends State<AddFriendPage> {
         });
       });
 
-      // 2. Remove their email from YOUR Shared lists (Revoke access)
+      // 2. Remove their email from my Shared lists
       final myListsSnapshot = await FirebaseFirestore.instance
           .collection('lists')
           .where('ownerId', isEqualTo: myUid)
@@ -246,7 +246,6 @@ class _AddFriendPage extends State<AddFriendPage> {
     final currentUser = FirebaseAuth.instance.currentUser;
     if(_searchEmail.isEmpty || currentUser == null) return;
     
-    // Force lowercase for accurate search
     final emailToFind = _searchEmail.trim().toLowerCase();
 
     if(emailToFind == currentUser.email) {
@@ -267,25 +266,25 @@ class _AddFriendPage extends State<AddFriendPage> {
         final requests = targetData['friendRequestsReceived'] ?? [];
         final friends = targetData['friends'] ?? [];
 
-        if (requests.contains(currentUser.uid) || friends.contains(currentUser.uid)) {
-           if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Already friends or request sent.")));
-           return;
-        }
+        bool alreadyConnected = requests.contains(currentUser.uid) || friends.contains(currentUser.uid);
 
-        await targetUserDoc.reference.update({
-          'friendRequestsReceived': FieldValue.arrayUnion([currentUser.uid])
-        });
-        await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).update({
-          'friendRequestsSent': FieldValue.arrayUnion([targetUserDoc.id])
-        });
-        
-        if(mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request sent!")));
-          _searchController.clear();
-          setState(() => _searchEmail = "");
+        if (!alreadyConnected) {
+          await targetUserDoc.reference.update({
+            'friendRequestsReceived': FieldValue.arrayUnion([currentUser.uid])
+          });
+          await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).update({
+            'friendRequestsSent': FieldValue.arrayUnion([targetUserDoc.id])
+          });
         }
-      } else {
-        if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("User not found")));
+      }
+      
+      // ambiguous success message
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("If the user has registered an account with that email, a friend request was sent."))
+        );
+        _searchController.clear();
+        setState(() => _searchEmail = "");
       }
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
