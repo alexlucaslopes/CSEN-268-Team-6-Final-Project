@@ -11,8 +11,8 @@ class AuthenticationBloc extends Bloc<AuthenticationEvent, AuthenticationState> 
     on<AppStarted>(_onAppStarted);
     on<LoggedIn>(_onLoggedIn);
     on<LoggedOut>(_onLoggedOut);
+    on<LogoutRequested>(_onLogoutRequested);
 
-    // Listen to Firebase Auth changes in real-time
     _userSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
       if (user != null) {
         add(LoggedIn(user: user));
@@ -35,9 +35,12 @@ class AuthenticationBloc extends Bloc<AuthenticationEvent, AuthenticationState> 
     emit(AuthenticationAuthenticated(user: event.user));
   }
 
-  Future<void> _onLoggedOut(LoggedOut event, Emitter<AuthenticationState> emit) async {
-    await FirebaseAuth.instance.signOut();
+  void _onLoggedOut(LoggedOut event, Emitter<AuthenticationState> emit) {
     emit(AuthenticationUnauthenticated());
+  }
+
+  Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthenticationState> emit) async {
+    await FirebaseAuth.instance.signOut();
   }
 
   @override
