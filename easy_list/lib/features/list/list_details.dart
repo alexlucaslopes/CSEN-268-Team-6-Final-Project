@@ -125,6 +125,33 @@ class _ListDetailsScreenState extends State<ListDetailsScreen> {
     });
   }
 
+  // Delete confirmation message
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: const Text("Delete List"),
+          content: const Text("Are you sure you want to delete this list? This action cannot be undone."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await FirebaseFirestore.instance.collection('lists').doc(widget.listName).delete();
+                if (context.mounted) context.pop();
+              },
+              child: const Text("Delete", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
@@ -145,10 +172,10 @@ class _ListDetailsScreenState extends State<ListDetailsScreen> {
             actions: [
               IconButton(icon: const Icon(Icons.person_add_outlined), onPressed: () => _showShareDialog(context)),
               PopupMenuButton<String>(
-                onSelected: (val) async {
+                onSelected: (val) {
                   if(val == 'delete') {
-                    await FirebaseFirestore.instance.collection('lists').doc(widget.listName).delete();
-                    if(context.mounted) context.pop();
+                    // confirmation
+                    _showDeleteConfirmation(context);
                   }
                 },
                 itemBuilder: (context) => [
