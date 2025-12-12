@@ -20,19 +20,20 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-
     return BlocBuilder<AuthenticationBloc, AuthenticationState>(
       builder: (context, state) {
-        if (state is! AuthenticationAuthenticated || currentUser == null) {
-          return const SizedBox.shrink();
-        }
+        final currentUser = FirebaseAuth.instance.currentUser;
+        final String userEmail = currentUser?.email ?? 'Signing out...';
+        final String userId = currentUser?.uid ?? '';
+        final bool isLoggingOut = currentUser == null || state is! AuthenticationAuthenticated;
 
-        Query<Map<String, dynamic>> notesQuery;
-        if (_selectedIndex == 0) {
-          notesQuery = FirebaseFirestore.instance.collection('lists').where('ownerId', isEqualTo: currentUser.uid);
-        } else {
-          notesQuery = FirebaseFirestore.instance.collection('lists').where('sharedWith', arrayContains: currentUser.email);
+        Query<Map<String, dynamic>>? notesQuery;
+        if (!isLoggingOut) {
+          if (_selectedIndex == 0) {
+            notesQuery = FirebaseFirestore.instance.collection('lists').where('ownerId', isEqualTo: userId);
+          } else {
+            notesQuery = FirebaseFirestore.instance.collection('lists').where('sharedWith', arrayContains: userEmail);
+          }
         }
 
         return Scaffold(
@@ -47,10 +48,12 @@ class _HomePageState extends State<HomePage> {
                     child: Icon(Icons.person, color: Colors.white),
                   ),
                   onSelected: (value) {
-                    if (value == 'signout') context.read<AuthenticationBloc>().add(LoggedOut());
+                    if (value == 'signout') {
+                      context.read<AuthenticationBloc>().add(LogoutRequested());
+                    }
                   },
                   itemBuilder: (context) => [
-                    PopupMenuItem(value: 'profile', child: Text(currentUser.email ?? "User")),
+                    PopupMenuItem(value: 'profile', child: Text(userEmail)),
                     const PopupMenuItem(value: 'signout', child: Text("Sign Out")),
                   ],
                 ),
@@ -58,7 +61,10 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
 
-          body: Column(
+          
+          body: isLoggingOut || notesQuery == null
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
             children: [
               const SizedBox(height: 20),
               Container(
@@ -120,7 +126,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
 
-          floatingActionButton: FloatingActionButton(
+          floatingActionButton: isLoggingOut ? null : FloatingActionButton(
             heroTag: 'home_fab', 
             backgroundColor: AppTheme.secondary,
             shape: const CircleBorder(),
@@ -129,7 +135,7 @@ class _HomePageState extends State<HomePage> {
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
-          bottomNavigationBar: BottomAppBar(
+          bottomNavigationBar: isLoggingOut ? null : BottomAppBar(
             shape: const CircularNotchedRectangle(),
             notchMargin: 8,
             color: Colors.white,
